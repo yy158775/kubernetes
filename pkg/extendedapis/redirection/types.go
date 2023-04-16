@@ -14,7 +14,7 @@ type RedirectionCheckConfigurationList struct {
 
 // RedirectionCheckSpec is the specification of a RedirectionCheckConfiguration
 type RedirectionCheckSpec struct {
-	rules []Rule
+	Rules []Rule
 }
 
 // +genclient
