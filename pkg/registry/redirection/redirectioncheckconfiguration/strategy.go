@@ -4,7 +4,6 @@ import (
 	"context"
 	genericvalidation "k8s.io/apimachinery/pkg/api/validation"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apiserver/pkg/storage/names"
 	"k8s.io/kubernetes/pkg/api/legacyscheme"
@@ -24,13 +23,11 @@ type RedirectionStrategy struct {
 var Strategy = RedirectionStrategy{legacyscheme.Scheme, names.SimpleNameGenerator}
 
 func (s RedirectionStrategy) GetResetFields() map[fieldpath.APIVersion]*fieldpath.Set {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (s RedirectionStrategy) ObjectKinds(object runtime.Object) ([]schema.GroupVersionKind, bool, error) {
-	//TODO implement me
-	panic("implement me")
+	return map[fieldpath.APIVersion]*fieldpath.Set{
+		"redirection.k8s.io/v1": fieldpath.NewSet(
+			fieldpath.MakePathOrDie("spec"),
+		),
+	}
 }
 
 func (s RedirectionStrategy) NamespaceScoped() bool {
@@ -61,9 +58,9 @@ func (s RedirectionStrategy) AllowCreateOnUpdate() bool {
 
 func (s RedirectionStrategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Object) {
 	newVC := obj.(*redirection.RedirectionCheckConfiguration)
-	oldVC := obj.(*redirection.RedirectionCheckConfiguration)
+	oldVC := old.(*redirection.RedirectionCheckConfiguration)
 
-	if !reflect.DeepEqual(oldVC.Spec.Rules, newVC.Spec.Rules) {
+	if !reflect.DeepEqual(oldVC.Spec.AllowedRedirectionHosts, newVC.Spec.AllowedRedirectionHosts) {
 		newVC.Generation = oldVC.Generation + 1
 	}
 }

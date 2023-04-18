@@ -22,10 +22,10 @@ func Resource(resource string) schema.GroupResource {
 }
 
 var (
-	// SchemeBuilder is the scheme builder with scheme init functions to run for this API package
-	SchemeBuilder = runtime.NewSchemeBuilder(addKnownTypes)
+	// localSchemeBuilder is the scheme builder with scheme init functions to run for this API package
+	localSchemeBuilder = runtime.NewSchemeBuilder(addKnownTypes)
 	// AddToScheme is a common registration function for mapping packaged scoped group & version keys to a scheme
-	AddToScheme = SchemeBuilder.AddToScheme
+	AddToScheme = localSchemeBuilder.AddToScheme
 )
 
 // Adds the list of known types to the given scheme.
