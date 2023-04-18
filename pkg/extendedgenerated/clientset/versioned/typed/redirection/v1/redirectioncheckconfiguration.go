@@ -20,8 +20,6 @@ package v1
 
 import (
 	"context"
-	json "encoding/json"
-	"fmt"
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -29,7 +27,6 @@ import (
 	watch "k8s.io/apimachinery/pkg/watch"
 	rest "k8s.io/client-go/rest"
 	v1 "k8s.io/kubernetes/pkg/extendedapis/redirection/v1"
-	redirectionv1 "k8s.io/kubernetes/pkg/extendedgenerated/applyconfiguration/redirection/v1"
 	scheme "k8s.io/kubernetes/pkg/extendedgenerated/clientset/versioned/scheme"
 )
 
@@ -49,7 +46,6 @@ type RedirectionCheckConfigurationInterface interface {
 	List(ctx context.Context, opts metav1.ListOptions) (*v1.RedirectionCheckConfigurationList, error)
 	Watch(ctx context.Context, opts metav1.ListOptions) (watch.Interface, error)
 	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (result *v1.RedirectionCheckConfiguration, err error)
-	Apply(ctx context.Context, redirectionCheckConfiguration *redirectionv1.RedirectionCheckConfigurationApplyConfiguration, opts metav1.ApplyOptions) (result *v1.RedirectionCheckConfiguration, err error)
 	RedirectionCheckConfigurationExpansion
 }
 
@@ -165,31 +161,6 @@ func (c *redirectionCheckConfigurations) Patch(ctx context.Context, name string,
 		Name(name).
 		SubResource(subresources...).
 		VersionedParams(&opts, scheme.ParameterCodec).
-		Body(data).
-		Do(ctx).
-		Into(result)
-	return
-}
-
-// Apply takes the given apply declarative configuration, applies it and returns the applied redirectionCheckConfiguration.
-func (c *redirectionCheckConfigurations) Apply(ctx context.Context, redirectionCheckConfiguration *redirectionv1.RedirectionCheckConfigurationApplyConfiguration, opts metav1.ApplyOptions) (result *v1.RedirectionCheckConfiguration, err error) {
-	if redirectionCheckConfiguration == nil {
-		return nil, fmt.Errorf("redirectionCheckConfiguration provided to Apply must not be nil")
-	}
-	patchOpts := opts.ToPatchOptions()
-	data, err := json.Marshal(redirectionCheckConfiguration)
-	if err != nil {
-		return nil, err
-	}
-	name := redirectionCheckConfiguration.Name
-	if name == nil {
-		return nil, fmt.Errorf("redirectionCheckConfiguration.Name must be provided to Apply")
-	}
-	result = &v1.RedirectionCheckConfiguration{}
-	err = c.client.Patch(types.ApplyPatchType).
-		Resource("redirectioncheckconfigurations").
-		Name(*name).
-		VersionedParams(&patchOpts, scheme.ParameterCodec).
 		Body(data).
 		Do(ctx).
 		Into(result)

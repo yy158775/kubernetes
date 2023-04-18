@@ -14,7 +14,7 @@ type RedirectionCheckConfigurationList struct {
 
 // RedirectionCheckSpec is the specification of a RedirectionCheckConfiguration
 type RedirectionCheckSpec struct {
-	Rules []Rule
+	AllowedRedirectionHosts []string
 }
 
 // +genclient
@@ -28,19 +28,6 @@ type RedirectionCheckConfiguration struct {
 
 	// Spec represents the specification of the desired behavior of RedirectionCheckConfiguration.
 	Spec RedirectionCheckSpec
-}
-
-// Rule represents the redirection check rule
-type Rule struct {
-	APIGroups []string
-
-	APIVersions []string
-
-	Resources []string
-
-	Scope *ScopeType
-
-	AllowedRedirectionHosts []string
 }
 
 // ScopeType specifies the type of scope being used

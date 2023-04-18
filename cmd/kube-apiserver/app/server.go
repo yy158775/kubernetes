@@ -22,6 +22,8 @@ package app
 import (
 	"crypto/tls"
 	"fmt"
+	extendedgenerated "k8s.io/kubernetes/pkg/extendedgenerated/clientset/versioned"
+	"k8s.io/kubernetes/pkg/responsedelegator"
 	"net"
 	"net/http"
 	"net/url"
@@ -209,6 +211,26 @@ func CreateServerChain(completedOptions completedServerRunOptions) (*aggregatora
 	if err != nil {
 		return nil, err
 	}
+
+	builder := aggregatorConfig.GenericConfig.BuildHandlerChainFunc
+
+	aggregatorConfig.GenericConfig.BuildHandlerChainFunc =
+		func(apiHandler http.Handler, c *genericapiserver.Config) (secure http.Handler) {
+			buildHandler := builder(apiHandler, c)
+
+			return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+				clientset, err := extendedgenerated.NewForConfig(c.LoopbackClientConfig)
+
+				if err != nil {
+					buildHandler.ServeHTTP(writer, request)
+					return
+				}
+
+				delegator := responsedelegator.NewResponseDelegator(writer, clientset)
+				buildHandler.ServeHTTP(delegator, request)
+			})
+		}
+
 	aggregatorServer, err := createAggregatorServer(aggregatorConfig, kubeAPIServer.GenericAPIServer, apiExtensionsServer.Informers)
 	if err != nil {
 		// we don't need special handling for innerStopCh because the aggregator server doesn't create any go routines

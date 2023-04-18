@@ -20,8 +20,6 @@ package fake
 
 import (
 	"context"
-	json "encoding/json"
-	"fmt"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
@@ -29,7 +27,6 @@ import (
 	watch "k8s.io/apimachinery/pkg/watch"
 	testing "k8s.io/client-go/testing"
 	v1 "k8s.io/kubernetes/pkg/extendedapis/redirection/v1"
-	redirectionv1 "k8s.io/kubernetes/pkg/extendedgenerated/applyconfiguration/redirection/v1"
 )
 
 // FakeRedirectionCheckConfigurations implements RedirectionCheckConfigurationInterface
@@ -117,27 +114,6 @@ func (c *FakeRedirectionCheckConfigurations) DeleteCollection(ctx context.Contex
 func (c *FakeRedirectionCheckConfigurations) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (result *v1.RedirectionCheckConfiguration, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewRootPatchSubresourceAction(redirectioncheckconfigurationsResource, name, pt, data, subresources...), &v1.RedirectionCheckConfiguration{})
-	if obj == nil {
-		return nil, err
-	}
-	return obj.(*v1.RedirectionCheckConfiguration), err
-}
-
-// Apply takes the given apply declarative configuration, applies it and returns the applied redirectionCheckConfiguration.
-func (c *FakeRedirectionCheckConfigurations) Apply(ctx context.Context, redirectionCheckConfiguration *redirectionv1.RedirectionCheckConfigurationApplyConfiguration, opts metav1.ApplyOptions) (result *v1.RedirectionCheckConfiguration, err error) {
-	if redirectionCheckConfiguration == nil {
-		return nil, fmt.Errorf("redirectionCheckConfiguration provided to Apply must not be nil")
-	}
-	data, err := json.Marshal(redirectionCheckConfiguration)
-	if err != nil {
-		return nil, err
-	}
-	name := redirectionCheckConfiguration.Name
-	if name == nil {
-		return nil, fmt.Errorf("redirectionCheckConfiguration.Name must be provided to Apply")
-	}
-	obj, err := c.Fake.
-		Invokes(testing.NewRootPatchSubresourceAction(redirectioncheckconfigurationsResource, *name, types.ApplyPatchType, data), &v1.RedirectionCheckConfiguration{})
 	if obj == nil {
 		return nil, err
 	}
