@@ -113,7 +113,6 @@ import (
 	noderest "k8s.io/kubernetes/pkg/registry/node/rest"
 	policyrest "k8s.io/kubernetes/pkg/registry/policy/rest"
 	rbacrest "k8s.io/kubernetes/pkg/registry/rbac/rest"
-	redirectionrest "k8s.io/kubernetes/pkg/registry/redirection/rest"
 	resourcerest "k8s.io/kubernetes/pkg/registry/resource/rest"
 	schedulingrest "k8s.io/kubernetes/pkg/registry/scheduling/rest"
 	storagerest "k8s.io/kubernetes/pkg/registry/storage/rest"
@@ -444,7 +443,7 @@ func (c completedConfig) New(delegationTarget genericapiserver.DelegationTarget)
 		admissionregistrationrest.RESTStorageProvider{Authorizer: c.GenericConfig.Authorization.Authorizer, DiscoveryClient: discoveryClientForAdmissionRegistration},
 		eventsrest.RESTStorageProvider{TTL: c.ExtraConfig.EventTTL},
 		resourcerest.RESTStorageProvider{},
-		redirectionrest.RESTStorageProvider{},
+		//redirectionrest.RESTStorageProvider{},
 	}
 	if err := m.InstallAPIs(c.ExtraConfig.APIResourceConfigSource, c.GenericConfig.RESTOptionsGetter, restStorageProviders...); err != nil {
 		return nil, err
@@ -762,6 +761,6 @@ func DefaultAPIResourceConfigSource() *serverstorage.ResourceConfig {
 	// enable the legacy beta resources that were present before stopped serving new beta APIs by default.
 	ret.EnableResources(legacyBetaEnabledByDefaultResources...)
 
-	ret.EnableVersions(redirectionAPIGroupVersionsEnabled...)
+	//ret.EnableVersions(redirectionAPIGroupVersionsEnabled...)
 	return ret
 }

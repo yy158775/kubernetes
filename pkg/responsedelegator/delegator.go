@@ -37,6 +37,7 @@ func (r ResponseDelegator) WriteHeader(statusCode int) {
 		configurations, err := r.client.RedirectionV1().RedirectionCheckConfigurations().List(context.TODO(), opts)
 
 		if err != nil {
+			klog.V(1).Infof("List RedirectionCheckConfigurations error:%s", err)
 			r.writer.WriteHeader(http.StatusBadGateway)
 			return
 		}
