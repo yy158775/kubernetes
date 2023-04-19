@@ -22,6 +22,7 @@ package app
 import (
 	"crypto/tls"
 	"fmt"
+	"k8s.io/apiserver/pkg/endpoints/responsewriter"
 	extendedgenerated "k8s.io/kubernetes/pkg/extendedgenerated/clientset/versioned"
 	"k8s.io/kubernetes/pkg/responsedelegator"
 	"net"
@@ -213,21 +214,26 @@ func CreateServerChain(completedOptions completedServerRunOptions) (*aggregatora
 	}
 
 	builder := aggregatorConfig.GenericConfig.BuildHandlerChainFunc
+	klog.Warningf("redirection builder created")
 
 	aggregatorConfig.GenericConfig.BuildHandlerChainFunc =
 		func(apiHandler http.Handler, c *genericapiserver.Config) (secure http.Handler) {
 			buildHandler := builder(apiHandler, c)
 
-			return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-				clientset, err := extendedgenerated.NewForConfig(c.LoopbackClientConfig)
+			klog.Infof("redirection buildHandler build")
+			clientset, err := extendedgenerated.NewForConfig(c.LoopbackClientConfig)
 
-				if err != nil {
-					buildHandler.ServeHTTP(writer, request)
-					return
-				}
+			if err != nil {
+				klog.Infof("redirection err:%v", err)
+				return buildHandler
+			}
+
+			return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+				klog.Infof("redirection HandlerFunc")
 
 				delegator := responsedelegator.NewResponseDelegator(writer, clientset)
-				buildHandler.ServeHTTP(delegator, request)
+				klog.Infof("redirection ServeHTTP")
+				buildHandler.ServeHTTP(responsewriter.WrapForHTTP1Or2(delegator), request)
 			})
 		}
 

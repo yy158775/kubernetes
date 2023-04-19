@@ -11,54 +11,63 @@ import (
 const Location = "Location"
 
 type ResponseDelegator struct {
-	writer http.ResponseWriter
+	http.ResponseWriter
 	client *extendedgenerated.Clientset
 }
 
+func (r ResponseDelegator) Unwrap() http.ResponseWriter {
+	return r.ResponseWriter
+}
+
 func NewResponseDelegator(writer http.ResponseWriter, client *extendedgenerated.Clientset) *ResponseDelegator {
-	return &ResponseDelegator{writer: writer, client: client}
-}
-
-func (r ResponseDelegator) Header() http.Header {
-	return r.writer.Header()
-}
-
-func (r ResponseDelegator) Write(bytes []byte) (int, error) {
-	return r.writer.Write(bytes)
+	return &ResponseDelegator{ResponseWriter: writer, client: client}
 }
 
 func (r ResponseDelegator) WriteHeader(statusCode int) {
 	if statusCode >= 300 && statusCode <= 399 {
-		redirectHost := r.writer.Header().Get(Location)
+		// 300 304
+		if statusCode == 300 || statusCode == 304 {
+			// special redirections
+			klog.Infof("allow special redirection response")
+			r.ResponseWriter.WriteHeader(statusCode)
+			return
+		}
 
-		klog.V(1).Infof("redirectHost:%s statusCode:%d", redirectHost, statusCode)
+		redirectHost := r.ResponseWriter.Header().Get(Location)
+
+		klog.Infof("redirectHost:%s statusCode:%d", redirectHost, statusCode)
 
 		opts := metav1.ListOptions{}
 		configurations, err := r.client.RedirectionV1().RedirectionCheckConfigurations().List(context.TODO(), opts)
 
 		if err != nil {
-			klog.V(1).Infof("List RedirectionCheckConfigurations error:%s", err)
-			r.writer.WriteHeader(http.StatusBadGateway)
+			klog.Infof("List RedirectionCheckConfigurations error:%s", err)
+			// when the error occur, default is pass
+			r.ResponseWriter.WriteHeader(statusCode)
 			return
 		}
 
+		klog.Infof("redirection configurations:%v", configurations)
 		for _, config := range configurations.Items {
 			for _, allowedHost := range config.Spec.AllowedRedirectionHosts {
 				if redirectHost == allowedHost {
-					klog.V(1).Infof("redirectHost is allowed:%s", redirectHost)
-					r.writer.WriteHeader(statusCode)
+					// redirectHost is allowed
+					klog.Infof("redirectHost is allowed:%s", redirectHost)
+					r.ResponseWriter.WriteHeader(statusCode)
 					return
 				}
 			}
 		}
 
-		klog.V(1).Infof("redirectHost is denied:%s", redirectHost)
-		r.Header().Del(Location)
-		r.writer.WriteHeader(http.StatusBadGateway)
+		// redirectHost is not allowed
+		klog.Infof("redirectHost is not allowed:%s", redirectHost)
+		r.ResponseWriter.Header().Del(Location)
+		r.ResponseWriter.WriteHeader(http.StatusBadGateway)
 		return
 	}
 
-	klog.V(1).Infof("normal response")
+	// other situation
+	klog.Infof("redirection normal response")
 	// others statusCode
-	r.writer.WriteHeader(statusCode)
+	r.ResponseWriter.WriteHeader(statusCode)
 }

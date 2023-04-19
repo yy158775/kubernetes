@@ -129,7 +129,7 @@ func NewServerRunOptions() *ServerRunOptions {
 			HTTPTimeout: time.Duration(5) * time.Second,
 		},
 		ServiceNodePortRange:                kubeoptions.DefaultServiceNodePortRange,
-		AggregatorRejectForwardingRedirects: true,
+		AggregatorRejectForwardingRedirects: false,
 	}
 
 	// Overwrite the default for storage data format.
